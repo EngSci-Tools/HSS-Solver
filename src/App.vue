@@ -151,11 +151,11 @@ export default {
     },
     calculateMinA(force, yieldStrain, FOS) {
       // Force in kN and yieldStrain in MPa. Returns A in mm^2
-      return 1000*(FOS*force)/yieldStrain;
+      return 1000*(FOS*Math.abs(force))/yieldStrain;
     },
     calculateMinI(force, length, stiffness, FOS) {
       // Force in kN, length in meters, stiffness in MPa. Returns I in 10^6*mm^4
-      return (10**3)*(FOS*force*length**2)/(Math.PI**2 * stiffness);
+      return (10**3)*(FOS*Math.abs(force)*length**2)/(Math.PI**2 * stiffness);
     },
     calculateMinR(length) {
       // length in meters. Returns r in mm.
