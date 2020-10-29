@@ -30,8 +30,8 @@
           <b-col sm="8"><b-form-input type="number" v-model="stiffness" value=200000 step=100></b-form-input></b-col>
         </b-row>
         <b-row class="my-1">
-          <b-col sm="4">Yield Strain <span class='unit'>MPa</span></b-col>
-          <b-col sm="8"><b-form-input type="number" v-model="yieldStrain" value=350 step=100></b-form-input></b-col>
+          <b-col sm="4">Yield Stress <span class='unit'>MPa</span></b-col>
+          <b-col sm="8"><b-form-input type="number" v-model="yieldStress" value=350 step=100></b-form-input></b-col>
         </b-row>
         <b-row class="my-1">
           <b-col sm="4">Internal Force <span class='unit'>kN</span></b-col>
@@ -98,7 +98,7 @@ export default {
 
     compressive: true,
     stiffness: 200000,
-    yieldStrain: 350,
+    yieldStress: 350,
     p: 0,
     l: 0
   }),
@@ -149,9 +149,9 @@ export default {
       const prec = Math.floor(shifted) === 1 ? 4 : 3
       return num.toPrecision(prec);
     },
-    calculateMinA(force, yieldStrain, FOS) {
-      // Force in kN and yieldStrain in MPa. Returns A in mm^2
-      return 1000*(FOS*Math.abs(force))/yieldStrain;
+    calculateMinA(force, yieldStress, FOS) {
+      // Force in kN and yieldStress in MPa. Returns A in mm^2
+      return 1000*(FOS*Math.abs(force))/yieldStress;
     },
     calculateMinI(force, length, stiffness, FOS) {
       // Force in kN, length in meters, stiffness in MPa. Returns I in 10^6*mm^4
@@ -163,7 +163,7 @@ export default {
     },
     compute() {
       // Computes minimum values based on forces and lengths.
-      this.minA = this.toSlideRule(this.calculateMinA(this.p, this.yieldStrain, this.tenFOS));
+      this.minA = this.toSlideRule(this.calculateMinA(this.p, this.yieldStress, this.tenFOS));
       this.minR = this.compressive ? this.toSlideRule(this.calculateMinR(this.l)) : 0;
       this.minI = this.compressive ? this.toSlideRule(this.calculateMinI(this.p, this.l, this.stiffness, this.comFOS)) : 0;
     }
