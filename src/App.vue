@@ -78,7 +78,7 @@ export default {
       return Object.keys(hss).map(key => ({"hss": key, ...getWidthHeightDepth(key), ...hss[key]}))
     },
     bestHss() {
-      return [...this.hss].filter(sec => this.hssIsValid(sec)).sort(sec => sec.mass).reverse()[0];
+      return [...this.hss].filter(sec => this.hssIsValid(sec)).sort((a, b) => a.mass - b.mass)[0];
     }
   },
   methods: {
