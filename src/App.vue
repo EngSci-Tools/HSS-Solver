@@ -1,8 +1,8 @@
 <template>
   <div id="app">
     <div id="titleBox">
-      <h2>Don't waste your time searching through that table</h2>
-      <p>Filter by Area, I, or r and get the square HSS that minimizes that mass automatically</p>
+      <h2>Don't waste your time searching through that table.</h2>
+      <p>Filter by Area, I, or r and get the square HSS that minimizes that mass automatically.</p>
     </div>
     <div id="searcher">
       <div id="filter-container">
@@ -38,16 +38,16 @@
           <b-thead>
             <b-tr>
               <b-th>HSS</b-th>
-              <b-th>Mass(kg/m)</b-th>
-              <b-th>Area(mm<sup>2</sup>)</b-th>
-              <b-th>I(mm<sup>4</sup>)</b-th>
-              <b-th>Radius(mm)</b-th>
+              <b-th>Mass <span class='unit'>kg/m</span></b-th>
+              <b-th>Area <span class='unit'>mm<sup>2</sup></span></b-th>
+              <b-th>I <span class='unit'>10<sup>6</sup>mm<sup>4</sup></span></b-th>
+              <b-th>Radius <span class='unit'>mm</span></b-th>
             </b-tr>
           </b-thead>
           <b-tbody>
             <b-tr v-for="sec in hss" :key="sec.mass" :class="{ invalid: !hssIsValid(sec) }">
-              <b-td>{{ sec.hss }}</b-td>
-              <b-td>{{ sec.mass }}</b-td>
+              <b-td @click='overwriteMins(sec)'>{{ sec.hss }}</b-td>
+              <b-td @click='overwriteMins(sec)'>{{ sec.mass }}</b-td>
               <b-td @click="minA = sec.area">{{ sec.area }}</b-td>
               <b-td @click="minI = sec.i">{{ sec.i }}</b-td>
               <b-td @click="minR = sec.radius">{{ sec.radius }}</b-td>
@@ -84,6 +84,13 @@ export default {
   methods: {
     hssIsValid(sec) {
       return sec.area >= this.minA && sec.i >= this.minI && sec.radius >= this.minR
+    },
+    overwriteMins(sec) {
+      ({
+        area: this.minA,
+        i: this.minI,
+        radius: this.minR
+      } = sec)
     }
   }
 }
@@ -139,6 +146,11 @@ export default {
 
       .invalid {
         color: #b0b8bf;
+      }
+
+      .unit {
+        color: #b0b8bf;
+        font-size: 13px;
       }
     }
   }
