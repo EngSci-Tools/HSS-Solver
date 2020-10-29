@@ -72,12 +72,15 @@ export default {
   computed: {
     hss() {
       function getWidthHeightDepth(sectionName) {
+        // Gets the width, height and cross sectional depth. Not used for anything at the moment
         const dims = sectionName.substring(4).split("x").map(dim => parseInt(dim));
         return {"width": dims[0], "height": dims[1], "depth": dims[2]}
       } 
+      // Turns the object into an array of objects with keys - ["hass", "width", "height", "depth", "mass", "area", "i", "radius"]
       return Object.keys(hss).map(key => ({"hss": key, ...getWidthHeightDepth(key), ...hss[key]}))
     },
     bestHss() {
+      // Finds the hss with the lowest mass that fits the minimum area, i, and r.
       return [...this.hss].filter(sec => this.hssIsValid(sec)).sort((a, b) => a.mass - b.mass)[0];
     }
   },
@@ -86,6 +89,7 @@ export default {
       return sec.area >= this.minA && sec.i >= this.minI && sec.radius >= this.minR
     },
     overwriteMins(sec) {
+      // Used to overwrite all the minimums when a user clicks on a row.
       ({
         area: this.minA,
         i: this.minI,
