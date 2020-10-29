@@ -118,6 +118,18 @@ export default {
     }
   },
   methods: {
+    hssName(index) {
+      // Cuts off the (HSS ###x###) of (HSS ###x###x##) if preceded by another of its same type.
+      function getPrefix(hss) {
+        return hss.substring(0, hss.length - 3);
+      }
+      if (index === 0) {
+        return this.hss[index].hss;
+      }
+      const lastName = this.hss[index-1].hss;
+      const ownName = this.hss[index].hss;
+      return getPrefix(lastName) === getPrefix(ownName) ? ownName.substring(ownName.length-4) : ownName;
+    },
     hssIsValid(sec) {
       return sec.area >= this.minA && sec.i >= this.minI && sec.radius >= this.minR
     },
@@ -224,6 +236,21 @@ export default {
 
       .invalid {
         color: #b0b8bf;
+      }
+    }
+  }
+
+  @media only screen and (max-width: 768px) {
+    #searcher {
+      flex-direction: column;
+
+      #filter-container {
+        width: 100%;
+        margin-bottom: 20px;
+      }
+
+      #table-container {
+        width: 100%;
       }
     }
   }
