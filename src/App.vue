@@ -8,25 +8,49 @@
       <div id="filter-container">
         <h5>Filter:</h5>
         <b-row class="my-1">
-          <b-col sm="3">Minimum Area</b-col>
-          <b-col sm="9"><b-form-input type="number" v-model="minA"></b-form-input></b-col>
+          <b-col sm="4">Minimum Area <span class='unit'>mm<sup>2</sup></span></b-col>
+          <b-col sm="8"><b-form-input type="number" v-model="minA" step=100></b-form-input></b-col>
         </b-row>
         <b-row class="my-1">
-          <b-col sm="3">Minimum I</b-col>
-          <b-col sm="9"><b-form-input type="number" v-model="minI"></b-form-input></b-col>
+          <b-col sm="4">Minimum I <span class='unit'>10<sup>6</sup>mm<sup>4</sup></span></b-col>
+          <b-col sm="8"><b-form-input type="number" v-model="minI" step=1></b-form-input></b-col>
         </b-row>
         <b-row class="my-1">
-          <b-col sm="3">Minimum Radius</b-col>
-          <b-col sm="9"><b-form-input type="number" v-model="minR"></b-form-input></b-col>
+          <b-col sm="4">Minimum Radius <span class='unit'>mm</span></b-col>
+          <b-col sm="8"><b-form-input type="number" v-model="minR" step=5></b-form-input></b-col>
         </b-row>
+        <div class="spacer"></div>
+        <h5>Compute Minimums:</h5>
+        <b-row class="my-1">
+          <b-col sm="4">Compressive</b-col>
+          <b-col sm="8" id="compressive-checkbox"><b-form-checkbox v-model="compressive"></b-form-checkbox></b-col>
+        </b-row>
+        <b-row class="my-1">
+          <b-col sm="4">Stiffness <span class='unit'>MPa</span></b-col>
+          <b-col sm="8"><b-form-input type="number" v-model="stiffness" value=200000 step=100></b-form-input></b-col>
+        </b-row>
+        <b-row class="my-1">
+          <b-col sm="4">Yield Strain <span class='unit'>MPa</span></b-col>
+          <b-col sm="8"><b-form-input type="number" v-model="yieldStrain" value=350 step=100></b-form-input></b-col>
+        </b-row>
+        <b-row class="my-1">
+          <b-col sm="4">Internal Force <span class='unit'>kN</span></b-col>
+          <b-col sm="8"><b-form-input type="number" v-model="p" value=200000 step=100></b-form-input></b-col>
+        </b-row>
+        <b-row class="my-1">
+          <b-col sm="4">Member Length <span class='unit'>m</span></b-col>
+          <b-col sm="8"><b-form-input :disabled='!compressive' type="number" v-model="l" value=200000 step=100></b-form-input></b-col>
+        </b-row>
+        <b-button id="compute-button" @click="compute">Compute</b-button>
         <div class="spacer"></div>
         <h5>Best Option:</h5>
         <template v-if="bestHss">
           <p>{{ bestHss["hss"] }}</p>
           <div id="best-hss-meta">
-            <p>Mass: {{ bestHss["mass"] }}</p>
-            <p>I: {{ bestHss["i"] }}</p>
-            <p>Radius: {{ bestHss["radius"] }}</p>
+            <p>Mass: {{ bestHss["mass"] }} <span class='unit'>kg/m</span></p>
+            <p>Area: {{ bestHss["area"] }} <span class='unit'>mm<sup>2</sup></span></p>
+            <p>I: {{ bestHss["i"] }} <span class='unit'>10<sup>6</sup>mm<sup>4</sup></span></p>
+            <p>Radius: {{ bestHss["radius"] }} <span class='unit'>mm</span></p>
           </div>
         </template>
         <template v-else>
@@ -48,7 +72,7 @@
             <b-tr v-for="sec in hss" :key="sec.mass" :class="{ invalid: !hssIsValid(sec) }">
               <b-td @click='overwriteMins(sec)'>{{ sec.hss }}</b-td>
               <b-td @click='overwriteMins(sec)'>{{ sec.mass }}</b-td>
-              <b-td @click="minA = sec.area">{{ sec.area }}</b-td>
+              <b-td @click="minA = sec.area">{{ sec.area }} </b-td>
               <b-td @click="minI = sec.i">{{ sec.i }}</b-td>
               <b-td @click="minR = sec.radius">{{ sec.radius }}</b-td>
             </b-tr>
@@ -65,9 +89,18 @@ import hss from './assets/hss-v1.json';
 export default {
   name: 'App',
   data: () => ({
+    tenFOS: 2,
+    comFOS: 3,
+
     minA: 0,
     minI: 0,
-    minR: 0
+    minR: 0,
+
+    compressive: true,
+    stiffness: 200000,
+    yieldStrain: 350,
+    p: 0,
+    l: 0
   }),
   computed: {
     hss() {
@@ -95,6 +128,32 @@ export default {
         i: this.minI,
         radius: this.minR
       } = sec)
+    },
+    toSlideRule(num) {
+      if (num === 0) {
+        return 0;
+      }
+      const shifted = num * 10**(Math.ceil(Math.log10(1/num)));
+      const prec = Math.floor(shifted) === 1 ? 4 : 3
+      return num.toPrecision(prec);
+    },
+    calculateMinA(force, yieldStrain, FOS) {
+      // Force in kN and yieldStrain in MPa. Returns A in mm^2
+      return 1000*(FOS*force)/yieldStrain;
+    },
+    calculateMinI(force, length, stiffness, FOS) {
+      // Force in kN, length in meters, stiffness in MPa. Returns I in 10^6*mm^4
+      return (10**3)*(FOS*force*length**2)/(Math.PI**2 * stiffness);
+    },
+    calculateMinR(length) {
+      // length in meters. Returns r in mm.
+      return 1000*length/200;
+    },
+    compute() {
+      // Computes minimum values based on forces and lengths.
+      this.minA = this.toSlideRule(this.calculateMinA(this.p, this.yieldStrain, this.tenFOS));
+      this.minR = this.compressive ? this.toSlideRule(this.calculateMinR(this.l)) : 0;
+      this.minI = this.compressive ? this.toSlideRule(this.calculateMinI(this.p, this.l, this.stiffness, this.comFOS)) : 0;
     }
   }
 }
@@ -110,6 +169,11 @@ export default {
   display: flex;
   flex-direction: column;
 
+  .unit {
+    color: #b0b8bf;
+    font-size: 13px;
+  }
+
   #titleBox {
     margin: 30px;
   }
@@ -122,9 +186,15 @@ export default {
     #filter-container {
       width: 35%;
       padding: 10px;
+      display: flex;
+      flex-direction: column;
 
       h5 {
         text-align: left;
+      }
+
+      #compute-button {
+        margin-left: auto;
       }
 
       .spacer {
@@ -142,6 +212,10 @@ export default {
         display: flex;
         flex-direction: row;
         align-items: center;
+
+        #compressive-checkbox {
+          text-align: left;
+        }
       }
     }
 
@@ -150,11 +224,6 @@ export default {
 
       .invalid {
         color: #b0b8bf;
-      }
-
-      .unit {
-        color: #b0b8bf;
-        font-size: 13px;
       }
     }
   }
